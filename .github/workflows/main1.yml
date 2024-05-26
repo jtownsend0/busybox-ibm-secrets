@@ -74,8 +74,8 @@ jobs:
         ibmcloud login --apikey ${{ secrets.IBM_CLOUD_API_KEY }} --no-region
         secret=$(ibmcloud secrets-manager secret get --id ${{ secrets.SECRET_ID }} --service-url ${{ secrets.SECRETS_MANAGER_URL }} --output json)
         echo "Retrieved secret JSON: $secret"
-        username=$(echo $secret | jq -r '.resources[0].secret_data.username')
-        password=$(echo $secret | jq -r '.resources[0].secret_data.password')
+        username=$(echo $secret | jq -r '.username')
+        password=$(echo $secret | jq -r '.password')
         echo "USERNAME=$(printf '%s\n' "$username" | sed 's/[\/&]/\\&/g; s/$/\\$/g')" >> $GITHUB_ENV
         echo "PASSWORD=$(printf '%s\n' "$password" | sed 's/[\/&]/\\&/g; s/$/\\$/g')" >> $GITHUB_ENV
         echo "Username: $username"
