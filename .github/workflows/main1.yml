@@ -16,7 +16,7 @@ env:
   DEPLOYMENT_NAME: my-deployment
   POD_NAME: my-pod
   SECRET_ID: ${{ secrets.SECRET_ID }}  # ID of the secret in IBM Cloud Secrets Manager
-  SECRETS_MANAGER_URL: "https://caa65fc7-ea5b-4f4b-be25-af98144cc5e5.us-south.secrets-manager.appdomain.cloud"
+  SECRETS_MANAGER_URL: https://caa65fc7-ea5b-4f4b-be25-af98144cc5e5.us-south.secrets-manager.appdomain.cloud
 
 jobs:
   setup-build-publish-deploy:
@@ -74,14 +74,20 @@ jobs:
       id: retrieve-secrets
       run: |
         SECRET=$(ibmcloud secrets-manager secret --id $SECRET_ID --service-url $SECRETS_MANAGER_URL --output json)
+        echo "SECRET: $SECRET"  # Debugging line to check the secret content
         echo "::set-output name=secret::$SECRET"
         
     # Parse the secrets and create Kubernetes secret
     - name: Parse secrets and create Kubernetes secret
       run: |
         SECRET=${{ steps.retrieve-secrets.outputs.secret }}
-        USERNAME=$(echo $SECRET | jq -r '.resources[0].username')
-        PASSWORD=$(echo $SECRET | jq -r '.resources[0].password')
+        echo "SECRET CONTENT: $SECRET"  # Debugging line to check the secret content before parsing
+        USERNAME=$(echo $SECRET | jq -r '.resources[0].username' || echo "null")
+        PASSWORD=$(echo $SECRET | jq -r '.resources[0].password' || echo "null")
+        if [[ "$USERNAME" == "null" || "$PASSWORD" == "null" ]]; then
+          echo "Error: Failed to parse JSON."
+          exit 1
+        fi
         kubectl create secret generic my-k8s-secret --from-literal=username=$USERNAME --from-literal=password=$PASSWORD --namespace=default --dry-run=client -o yaml | kubectl apply -f -
 
     # Configure kubectl to use the IKS cluster
