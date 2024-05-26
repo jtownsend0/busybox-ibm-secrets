@@ -80,8 +80,8 @@ jobs:
 
     - name: Debugging output before creating secret
       run: |
-        escaped_username=$(echo "${{ env.USERNAME }}" | sed 's/["]/\\&/g; s/$/\\$/g')
-        escaped_password=$(echo "${{ env.PASSWORD }}" | sed 's/["]/\\&/g; s/$/\\$/g')
+        escaped_username=$(printf '%s\n' "${{ env.USERNAME }}" | sed 's/["\\$]/\\&/g')
+        escaped_password=$(printf '%s\n' "${{ env.PASSWORD }}" | sed 's/["\\$]/\\&/g')
         printf "Username to be stored in secret: %s\n" "$escaped_username"
         printf "Password to be stored in secret: %s\n" "$escaped_password"
         if [[ -z "$escaped_username" || -z "$escaped_password" ]]; then
