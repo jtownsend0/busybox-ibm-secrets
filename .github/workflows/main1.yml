@@ -25,6 +25,7 @@ jobs:
     environment: production
 
     steps:
+
     - name: Checkout
       uses: actions/checkout@v4
 
@@ -73,8 +74,8 @@ jobs:
       run: |
         ibmcloud login --apikey ${{ secrets.IBM_CLOUD_API_KEY }} --no-region
         secret=$(ibmcloud secrets-manager secret --id ${{ secrets.SECRET_ID }} --service-url ${{ secrets.SECRETS_MANAGER_URL }} --output json)
-        export username=$(echo $secret | jq -r '.resources[0].username')
-        export password=$(echo $secret | jq -r '.resources[0].password')
+        username=$(echo $secret | jq -r '.username')
+        password=$(echo $secret | jq -r '.password')
         echo "Username: $username"
         echo "Password: $password"
 
@@ -103,7 +104,7 @@ jobs:
           containers:
           - name: my-container
             image: $REGISTRY_HOSTNAME/$ICR_NAMESPACE/$IMAGE_NAME:$GITHUB_SHA
-            command: ['sh', '-c', "echo \$USERNAME && echo \$PASSWORD && sleep 3600"]
+            command: ['sh', '-c', 'echo \$USERNAME && echo \$PASSWORD && sleep 3600']
             env:
             - name: USERNAME
               valueFrom:
