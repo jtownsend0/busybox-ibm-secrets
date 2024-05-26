@@ -71,9 +71,6 @@ jobs:
 
     # Retrieve secrets from IBM Cloud Secrets Manager and create Kubernetes secret
     - name: Retrieve secrets and create Kubernetes secret
-      env:
-        SECRETS_MANAGER_URL: ${{ secrets.SECCRETS_MANAGER_URL }}
-        SECRET_ID: ${{ secrets.SECRET_ID }}
       run: |
         SECRET=$(ibmcloud secrets-manager secret --id $SECRET_ID --service-url $SECRETS_MANAGER_URL --output json)
         USERNAME=$(echo $SECRET | jq -r '.resources[0].username')
