@@ -71,21 +71,21 @@ jobs:
 
     # Retrieve secret and extract fields
     - name: Retrieve secret and extract fields
+      id: retrieve-secrets
       run: |
         ibmcloud login --apikey ${{ secrets.IBM_CLOUD_API_KEY }} --no-region
         secret=$(ibmcloud secrets-manager secret --id ${{ secrets.SECRET_ID }} --service-url ${{ secrets.SECRETS_MANAGER_URL }} --output json)
-        username=$(echo "$secret" | jq -r '.username')
-        password=$(echo "$secret" | jq -r '.password')
-        echo "Username: $username"
-        echo "Password: $password"
-        echo "USERNAME=$username" >> $GITHUB_ENV
-        echo "PASSWORD=$password" >> $GITHUB_ENV
+        echo "::set-output name=username::$(echo $secret | jq -r '.username')"
+        echo "::set-output name=password::$(echo $secret | jq -r '.password')"
 
     # Create Kubernetes secret
     - name: Create Kubernetes secret
       run: |
         ibmcloud ks cluster config --cluster $IKS_CLUSTER
-        kubectl create secret generic my-k8s-secret --from-literal=username=${{ env.USERNAME }} --from-literal=password=${{ env.PASSWORD }} --namespace=default --dry-run=client -o yaml | kubectl apply -f -
+        kubectl create secret generic my-k8s-secret \
+          --from-literal=username=${{ steps.retrieve-secrets.outputs.username }} \
+          --from-literal=password=${{ steps.retrieve-secrets.outputs.password }} \
+          --namespace=default --dry-run=client -o yaml | kubectl apply -f -
 
     # Configure kubectl to use the IKS cluster
     - name: Configure kubectl
