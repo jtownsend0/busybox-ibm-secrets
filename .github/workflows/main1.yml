@@ -76,8 +76,11 @@ jobs:
         secret=$(ibmcloud secrets-manager secret --id ${{ secrets.SECRET_ID }} --service-url ${{ secrets.SECRETS_MANAGER_URL }} --output json)
         username=$(echo $secret | jq -r '.username')
         password=$(echo $secret | jq -r '.password')
-        echo "Username: $username" >> $GITHUB_ENV
-        echo "Password: $password" >> $GITHUB_ENV
+        echo "Username: $username" 
+        echo "Password: $password"
+        echo "::set-output name=username::$username"
+        echo "::set-output name=password::$password"
+
 
     # Create Kubernetes secret
     - name: Create Kubernetes secret
