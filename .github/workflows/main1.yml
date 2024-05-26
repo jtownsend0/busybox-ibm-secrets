@@ -76,8 +76,8 @@ jobs:
         echo "Retrieved secret JSON: $secret"
         username=$(echo $secret | jq -r '.username')
         password=$(echo $secret | jq -r '.password')
-        escaped_username=$(printf '%s\n' "$username" | sed 's/[\"]/\\&/g')
-        escaped_password=$(printf '%s\n' "$password" | sed 's/[\"]/\\&/g')
+        escaped_username=$(printf '%s\n' "$username" | sed 's/["\\]/\\&/g')
+        escaped_password=$(printf '%s\n' "$password" | sed 's/["\\]/\\&/g')
         echo "USERNAME=${escaped_username}" >> $GITHUB_ENV
         echo "PASSWORD=${escaped_password}" >> $GITHUB_ENV
         echo "Username: $escaped_username"
