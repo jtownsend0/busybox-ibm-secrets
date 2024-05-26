@@ -16,7 +16,7 @@ env:
   DEPLOYMENT_NAME: my-deployment
   POD_NAME: my-pod
   SECRET_ID: ${{ secrets.SECRET_ID }}
-  SECRETS_MANAGER_URL: https://caa65fc7-ea5b-4f4b-be25-af98144cc5e5.us-south.secrets-manager.appdomain.cloud
+  SECRETS_MANAGER_URL: ${{ secrets.SESECRETS_MANAGER_URL }}
 
 jobs:
   setup-build-publish-deploy:
@@ -76,10 +76,12 @@ jobs:
         echo "Retrieved secret JSON: $secret"
         username=$(echo $secret | jq -r '.username')
         password=$(echo $secret | jq -r '.password')
-        echo "USERNAME=$(printf '%s\n' "$username" | sed 's/[\/&]/\\&/g; s/$/\\$/g')" >> $GITHUB_ENV
-        echo "PASSWORD=$(printf '%s\n' "$password" | sed 's/[\/&]/\\&/g; s/$/\\$/g')" >> $GITHUB_ENV
-        echo "Username: $username"
-        echo "Password: $password"
+        escaped_username=$(printf '%s\n' "$username" | sed 's/[\/&]/\\&/g; s/$/\\$/g')
+        escaped_password=$(printf '%s\n' "$password" | sed 's/[\/&]/\\&/g; s/$/\\$/g')
+        echo "USERNAME=${escaped_username}" >> $GITHUB_ENV
+        echo "PASSWORD=${escaped_password}" >> $GITHUB_ENV
+        echo "Username: $escaped_username"
+        echo "Password: $escaped_password"
 
     - name: Debugging output before creating secret
       run: |
