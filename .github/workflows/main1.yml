@@ -69,27 +69,14 @@ jobs:
       run: |
         docker push $REGISTRY_HOSTNAME/$ICR_NAMESPACE/$IMAGE_NAME:$GITHUB_SHA
 
-    # Retrieve secrets from IBM Cloud Secrets Manager
-    - name: Retrieve secrets from IBM Cloud Secrets Manager
-      id: retrieve-secrets
-      run: |
-        SECRET=$(ibmcloud secrets-manager secret --id $SECRET_ID --service-url $SECRETS_MANAGER_URL --output json)
-        echo "SECRET: $SECRET"  # Debugging line to check the secret content
-        echo "::set-output name=secret::$SECRET"
-        
-    # Parse the secrets and create Kubernetes secret
-    - name: Parse secrets and create Kubernetes secret
-      run: |
-        SECRET=${{ steps.retrieve-secrets.outputs.secret }}
-        echo "SECRET CONTENT: $SECRET"  # Debugging line to check the secret content before parsing
-        # Clean up and format the JSON content
-        CLEAN_SECRET=$(echo "$SECRET" | sed 's/.*SECRET: //; s/SECRET CONTENT: //')
-        USERNAME=$(echo "$CLEAN_SECRET" | jq -r '.username' || echo "null")
-        PASSWORD=$(echo "$CLEAN_SECRET" | jq -r '.password' || echo "null")
-        if [[ "$USERNAME" == "null" || "$PASSWORD" == "null" ]]; then
-          echo "Error: Failed to parse JSON."
-          exit 1
-        fi
+         - name: Retrieve secret and extract fields
+        run: |
+          ibmcloud login --apikey ${{ secrets.IBM_CLOUD_API_KEY }} --no-region
+          secret=$(ibmcloud secrets-manager secret --id "645f2484-dc8f-a736-123b-27963d1b3bfa" --service-url https://caa65fc7-ea5b-4f4b-be25-af98144cc5e5.us-south.secrets-manager.appdomain.cloud --output json)
+          username=$(echo $secret | jq -r '.username')
+          password=$(echo $secret | jq -r '.password')
+          echo "Username: $username"
+          echo "Password: $password"
         kubectl create secret generic my-k8s-secret --from-literal=username=$USERNAME --from-literal=password=$PASSWORD --namespace=default --dry-run=client -o yaml | kubectl apply -f -
 
     # Configure kubectl to use the IKS cluster
