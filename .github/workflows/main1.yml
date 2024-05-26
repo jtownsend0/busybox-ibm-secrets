@@ -75,22 +75,14 @@ jobs:
         secret=$(ibmcloud secrets-manager secret get --id ${{ secrets.SECRET_ID }} --service-url ${{ secrets.SECRETS_MANAGER_URL }} --output json)
         username=$(echo $secret | jq -r '.username')
         password=$(echo $secret | jq -r '.password')
-
-        if [[ "$username" == "null" || "$password" == "null" ]]; then
-          echo "Error: Username or password is null."
-          exit 1
-        fi
-
-        echo "Username: $username"
-        echo "Password: $password"
         echo "USERNAME=${username}" >> $GITHUB_ENV
         echo "PASSWORD=${password}" >> $GITHUB_ENV
 
     # Debugging output before creating secret
     - name: Debugging output before creating secret
       run: |
-        echo "Username to be stored in secret: ${{ env.USERNAME }}"
-        echo "Password to be stored in secret: ${{ env.PASSWORD }}"
+        printf "Username to be stored in secret: %s\n" "${{ env.USERNAME }}"
+        printf "Password to be stored in secret: %s\n" "${{ env.PASSWORD }}"
 
         if [[ -z "${{ env.USERNAME }}" || -z "${{ env.PASSWORD }}" ]]; then
           echo "Error: Username or password environment variable is empty."
