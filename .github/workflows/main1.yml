@@ -110,10 +110,10 @@ jobs:
               valueFrom:
                 secretKeyRef:
                   name: my-k8s-secret
-                  key: username
+                  key: $username
             - name: PASSWORD
               valueFrom:
                 secretKeyRef:
                   name: my-k8s-secret
-                  key: password
+                  key: $password
         EOF
