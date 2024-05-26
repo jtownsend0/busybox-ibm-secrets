@@ -41,8 +41,7 @@ jobs:
     # Step 3: Authenticate with IBM Cloud CLI
     - name: Authenticate with IBM Cloud CLI
       run: |
-        ibmcloud login --apikey "${IBM_CLOUD_API_KEY}" -r "${IBM_CLOUD_REGION}" -g default
-        ibmcloud cr region-set "${IBM_CLOUD_REGION}"
+        ibmcloud login --apikey "${IBM_CLOUD_API_KEY}"
         ibmcloud cr login
 
     # Step 4: Set up Docker Buildx
