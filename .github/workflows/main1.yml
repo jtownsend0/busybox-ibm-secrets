@@ -72,7 +72,7 @@ jobs:
     - name: Retrieve secret and extract fields
       run: |
         ibmcloud login --apikey ${{ secrets.IBM_CLOUD_API_KEY }} --no-region
-        secret=$(ibmcloud secrets-manager secret get --id ${{ secrets.SECRET_ID }} --service-url ${{ secrets.SECRETS_MANAGER_URL }} --output json)
+        secret=$(ibmcloud secrets-manager secret get --id ${{ secrets.SECRET_ID }} --service-url ${{ secrets.SECCRETS_MANAGER_URL }} --output json)
         username=$(echo $secret | jq -r '.username')
         password=$(echo $secret | jq -r '.password')
         echo "USERNAME=${username}" >> $GITHUB_ENV
