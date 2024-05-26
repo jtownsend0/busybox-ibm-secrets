@@ -13,8 +13,8 @@ env:
   REGISTRY_HOSTNAME: us.icr.io
   IMAGE_NAME: busybox
   IKS_CLUSTER: mycluster-us-south-1-bx2.4x16
-  DEPLOYMENT_NAME: busybox
-  PORT: 5001
+  DEPLOYMENT_NAME: my-deployment
+  POD_NAME: my-pod
   SECRET_ID: ${{ secrets.SECRET_ID }}  # ID of the secret in IBM Cloud Secrets Manager
   SECRETS_MANAGER_URL: ${{ secrets.SECRETS_MANAGER_URL }}  # URL of the Secrets Manager instance
 
@@ -22,7 +22,6 @@ jobs:
   setup-build-publish-deploy:
     name: Setup, Build, Publish, and Deploy
     runs-on: ubuntu-latest
-    environment: production
     steps:
 
     - name: Checkout
@@ -37,6 +36,7 @@ jobs:
         ibmcloud plugin install -f kubernetes-service
         ibmcloud plugin install -f container-registry
         ibmcloud plugin install -f secrets-manager  # Install the Secrets Manager plugin
+        sudo apt-get update && sudo apt-get install -y jq  # Install jq for JSON parsing
 
     # Authenticate with IBM Cloud CLI
     - name: Authenticate with IBM Cloud CLI
@@ -60,29 +60,57 @@ jobs:
     # Build the Docker image
     - name: Build with Docker
       run: |
-        docker build -t ghcr.io/${{ github.repository_owner }}/$IMAGE_NAME:$GITHUB_SHA \
-          --build-arg GITHUB_SHA="$GITHUB_SHA" \
-          --build-arg GITHUB_REF="$GITHUB_REF" .
+        docker build -t $REGISTRY_HOSTNAME/$ICR_NAMESPACE/$IMAGE_NAME:$GITHUB_SHA .
 
     # Push the image to GitHub Container Registry
     - name: Push the image to GHCR
       run: |
-        docker push ghcr.io/${{ github.repository_owner }}/$IMAGE_NAME:$GITHUB_SHA
+        docker push $REGISTRY_HOSTNAME/$ICR_NAMESPACE/$IMAGE_NAME:$GITHUB_SHA
 
-    # Retrieve secrets from IBM Cloud Secrets Manager and create Kubernetes secret
-    - name: Retrieve secrets and create Kubernetes secret
+    # Retrieve secrets from IBM Cloud Secrets Manager
+    - name: Retrieve secrets from IBM Cloud Secrets Manager
+      id: retrieve-secrets
       run: |
         SECRET=$(ibmcloud secrets-manager secret --id $SECRET_ID --service-url $SECRETS_MANAGER_URL --output json)
+        echo "::set-output name=secret::$SECRET"
+        
+    # Parse the secrets and create Kubernetes secret
+    - name: Parse secrets and create Kubernetes secret
+      run: |
+        SECRET=${{ steps.retrieve-secrets.outputs.secret }}
         USERNAME=$(echo $SECRET | jq -r '.resources[0].username')
         PASSWORD=$(echo $SECRET | jq -r '.resources[0].password')
         kubectl create secret generic my-k8s-secret --from-literal=username=$USERNAME --from-literal=password=$PASSWORD --namespace=default --dry-run=client -o yaml | kubectl apply -f -
 
-    # Deploy the Docker image to the IKS cluster
-    - name: Deploy to IKS
+    # Configure kubectl to use the IKS cluster
+    - name: Configure kubectl
       run: |
         ibmcloud ks cluster config --cluster $IKS_CLUSTER
         kubectl config current-context
-        kubectl create deployment $DEPLOYMENT_NAME --image=$REGISTRY_HOSTNAME/$ICR_NAMESPACE/$IMAGE_NAME:$GITHUB_SHA --dry-run=client -o yaml | kubectl apply -f -
-        kubectl rollout status deployment/$DEPLOYMENT_NAME
-        kubectl create service loadbalancer $DEPLOYMENT_NAME --tcp=3001:$PORT --dry-run=client -o yaml | kubectl apply -f -
-        kubectl get services -o wide
+
+    # Deploy the Pod
+    - name: Deploy the Pod
+      run: |
+        cat <<EOF | kubectl apply -f -
+        apiVersion: v1
+        kind: Pod
+        metadata:
+          name: $POD_NAME
+          namespace: default
+        spec:
+          containers:
+          - name: my-container
+            image: $REGISTRY_HOSTNAME/$ICR_NAMESPACE/$IMAGE_NAME:$GITHUB_SHA
+            command: ['sh', '-c', 'echo \$USERNAME && echo \$PASSWORD && sleep 3600']
+            env:
+            - name: USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: my-k8s-secret
+                  key: username
+            - name: PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: my-k8s-secret
+                  key: password
+        EOF
