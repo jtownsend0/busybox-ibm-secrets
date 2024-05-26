@@ -68,15 +68,17 @@ jobs:
       run: |
         docker push $REGISTRY_HOSTNAME/$ICR_NAMESPACE/$IMAGE_NAME:$GITHUB_SHA
 
-    # Retrieve secret and extract fields
+     # Retrieve secret and extract fields
     - name: Retrieve secret and extract fields
       run: |
         ibmcloud login --apikey ${{ secrets.IBM_CLOUD_API_KEY }} --no-region
-        secret=$(ibmcloud secrets-manager secret get --id ${{ secrets.SECRET_ID }} --service-url ${{ secrets.SECCRETS_MANAGER_URL }} --output json)
+        secret=$(ibmcloud secrets-manager secret --id ${{ secrets.SECRET_ID }} --service-url ${{ secrets.SECRETS_MANAGER_URL }} --output json)
         username=$(echo $secret | jq -r '.username')
         password=$(echo $secret | jq -r '.password')
-        echo "USERNAME=${username}" >> $GITHUB_ENV
-        echo "PASSWORD=${password}" >> $GITHUB_ENV
+        echo "Username: $username" 
+        echo "Password: $password"
+        echo "::set-output name=username::$username"
+        echo "::set-output name=password::$password"
 
     - name: Debugging output before creating secret
       run: |
