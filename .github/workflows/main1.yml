@@ -16,7 +16,7 @@ env:
   DEPLOYMENT_NAME: my-deployment
   POD_NAME: my-pod
   SECRET_ID: ${{ secrets.SECRET_ID }}
-  SECRETS_MANAGER_URL: ${{ secrets.SECRETS_MANAGER_URL }}
+  SECRETS_MANAGER_URL: https://caa65fc7-ea5b-4f4b-be25-af98144cc5e5.us-south.secrets-manager.appdomain.cloud
 
 jobs:
   setup-build-publish-deploy:
@@ -88,6 +88,7 @@ jobs:
         if [[ -z "${{ env.USERNAME }}" || -z "${{ env.PASSWORD }}" ]]; then
           echo "Error: Username or password environment variable is empty."
           exit 1
+        fi
 
     - name: Create Kubernetes secret
       run: |
