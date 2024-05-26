@@ -98,13 +98,13 @@ jobs:
         apiVersion: v1
         kind: Pod
         metadata:
-          name: $POD_NAME
+          name: my-pod
           namespace: default
         spec:
           containers:
           - name: my-container
-            image: $REGISTRY_HOSTNAME/$ICR_NAMESPACE/$IMAGE_NAME:$GITHUB_SHA
-            command: ['sh', '-c', 'echo \$USERNAME && echo \$PASSWORD && sleep 3600']
+            image: us.icr.io/csmbot/busybox:latest
+            command: ['sh', '-c', 'echo $USERNAME && echo $PASSWORD && sleep 3600']
             env:
             - name: USERNAME
               valueFrom:
@@ -116,4 +116,3 @@ jobs:
                 secretKeyRef:
                   name: my-k8s-secret
                   key: password
-        EOF
