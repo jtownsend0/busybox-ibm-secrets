@@ -80,28 +80,23 @@ jobs:
 
     - name: Debugging output before creating secret
       run: |
-        escaped_password=$(echo '3fr"'\''t^nXbt;UUi' | sed "s/\"/\\\\\"/g")
-        printf "Username to be stored in secret: %s\n" "${{ env.USERNAME }}"
+        escaped_username=$(echo "${{ env.USERNAME }}" | sed 's/["]/\\&/g; s/$/\\$/g')
+        escaped_password=$(echo "${{ env.PASSWORD }}" | sed 's/["]/\\&/g; s/$/\\$/g')
+        printf "Username to be stored in secret: %s\n" "$escaped_username"
         printf "Password to be stored in secret: %s\n" "$escaped_password"
-    
-        if [[ -z "${{ env.USERNAME }}" || -z "$escaped_password" ]]; then
+        if [[ -z "$escaped_username" || -z "$escaped_password" ]]; then
           echo "Error: Username or password environment variable is empty."
           exit 1
         fi
 
-
     - name: Create Kubernetes secret
       run: |
-        escaped_username=$(echo "${{ env.USERNAME }}" | sed 's/"/\\"/g; s/$/\\$/g')
-        escaped_password=$(echo "${{ env.PASSWORD }}" | sed 's/"/\\"/g; s/$/\\$/g')
         printf "Creating Kubernetes secret with username: %s and password: %s\n" "$escaped_username" "$escaped_password"
         ibmcloud ks cluster config --cluster $IKS_CLUSTER
         kubectl create secret generic my-k8s-secret \
           --from-literal=username="$escaped_username" \
           --from-literal=password="$escaped_password" \
           --namespace=default
-
-
 
     # Configure kubectl to use the IKS cluster
     - name: Configure kubectl
