@@ -16,7 +16,7 @@ env:
   DEPLOYMENT_NAME: my-deployment
   POD_NAME: my-pod
   SECRET_ID: ${{ secrets.SECRET_ID }}  # ID of the secret in IBM Cloud Secrets Manager
-  SECRETS_MANAGER_URL: ${{ secrets.SECRETS_MANAGER_URL }}  # URL of the Secrets Manager instance
+  SECRETS_MANAGER_URL: ${{ secrets.SECCRETS_MANAGER_URL }}  # URL of the Secrets Manager instance
 
 jobs:
   setup-build-publish-deploy:
@@ -73,8 +73,12 @@ jobs:
       id: retrieve-secrets
       run: |
         echo "Retrieving secret with ID: $SECRET_ID from URL: $SECRETS_MANAGER_URL"
-        SECRET=$(ibmcloud secrets-manager secret --id $SECRET_ID --service-url $SECRETS_MANAGER_URL --output json)
+        SECRET=$(ibmcloud secrets-manager secret --id $SECRET_ID --service-url $SECRETS_MANAGER_URL --output json || echo "Failed to retrieve secret")
         echo "Secret fetched: $SECRET"
+        if [[ $SECRET == "Failed to retrieve secret" ]]; then
+          echo "Error retrieving secret"
+          exit 1
+        fi
         echo "::set-output name=secret::$SECRET"
         
     # Parse the secrets and create Kubernetes secret
