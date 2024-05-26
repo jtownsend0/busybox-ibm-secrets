@@ -22,7 +22,8 @@ jobs:
   setup-build-publish-deploy:
     name: Setup, Build, Publish, and Deploy
     runs-on: ubuntu-latest
-	environment: production
+    environment: production
+
     steps:
 
     - name: Checkout
@@ -72,35 +73,46 @@ jobs:
     - name: Retrieve secrets from IBM Cloud Secrets Manager
       id: retrieve-secrets
       run: |
-        echo "Retrieving secret with ID: $SECRET_ID from URL: $SECRETS_MANAGER_URL"
-        SECRET=$(ibmcloud secrets-manager secret --id $SECRET_ID --service-url $SECRETS_MANAGER_URL --output json || echo "Failed to retrieve secret")
-        echo "Secret fetched: $SECRET"
-        if echo "$SECRET" | jq .; then
-          echo "Valid JSON received"
-          echo "::set-output name=secret::$SECRET"
-        else
-          echo "Error retrieving secret or invalid JSON"
-          exit 1
-        fi
-
+        SECRET=$(ibmcloud secrets-manager secret --id $SECRET_ID --service-url $SECRETS_MANAGER_URL --output json)
+        echo "::set-output name=secret::$SECRET"
+        
     # Parse the secrets and create Kubernetes secret
     - name: Parse secrets and create Kubernetes secret
       run: |
-        echo "Parsing the retrieved secret..."
-        SECRET="${{ steps.retrieve-secrets.outputs.secret }}"
-        echo "Retrieved Secret JSON: $SECRET"
-        USERNAME=$(echo "$SECRET" | jq -r '.username')
-        PASSWORD=$(echo "$SECRET" | jq -r '.password')
-        if [ -z "$USERNAME" ] || [ -z "$PASSWORD" ]; then
-          echo "Error: Username or Password not found in the secret"
-          exit 1
-        fi
-        echo "Username: $USERNAME"
-        echo "Password: $PASSWORD"
-        kubectl create secret generic my-k8s-secret --from-literal=username="$USERNAME" --from-literal=password="$PASSWORD" --namespace=default --dry-run=client -o yaml | kubectl apply -f -
+        SECRET=${{ steps.retrieve-secrets.outputs.secret }}
+        USERNAME=$(echo $SECRET | jq -r '.resources[0].username')
+        PASSWORD=$(echo $SECRET | jq -r '.resources[0].password')
+        kubectl create secret generic my-k8s-secret --from-literal=username=$USERNAME --from-literal=password=$PASSWORD --namespace=default --dry-run=client -o yaml | kubectl apply -f -
 
     # Configure kubectl to use the IKS cluster
     - name: Configure kubectl
       run: |
         ibmcloud ks cluster config --cluster $IKS_CLUSTER
-       
+        kubectl config current-context
+
+    # Deploy the Pod
+    - name: Deploy the Pod
+      run: |
+        cat <<EOF | kubectl apply -f -
+        apiVersion: v1
+        kind: Pod
+        metadata:
+          name: $POD_NAME
+          namespace: default
+        spec:
+          containers:
+          - name: my-container
+            image: $REGISTRY_HOSTNAME/$ICR_NAMESPACE/$IMAGE_NAME:$GITHUB_SHA
+            command: ['sh', '-c', 'echo \$USERNAME && echo \$PASSWORD && sleep 3600']
+            env:
+            - name: USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: my-k8s-secret
+                  key: username
+            - name: PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: my-k8s-secret
+                  key: password
+        EOF
