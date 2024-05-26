@@ -16,7 +16,6 @@ env:
   DEPLOYMENT_NAME: my-deployment
   POD_NAME: my-pod
   SECRET_ID: ${{ secrets.SECRET_ID }}  # ID of the secret in IBM Cloud Secrets Manager
-  # Manually set your SECRETS_MANAGER_URL here
   SECRETS_MANAGER_URL: https://caa65fc7-ea5b-4f4b-be25-af98144cc5e5.us-south.secrets-manager.appdomain.cloud
 
 jobs:
