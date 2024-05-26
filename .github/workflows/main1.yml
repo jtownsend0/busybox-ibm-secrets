@@ -1,16 +1,9 @@
-# This workflow will build a docker container, publish it to IBM Container Registry, and deploy it to IKS when there is a push to the "main" branch.
-#
-# To configure this workflow:
-#
-# 1. Ensure that your repository contains a Dockerfile
-# 2. Setup secrets in your repository by going to settings: Create ICR_NAMESPACE and IBM_CLOUD_API_KEY
-# 3. Change the values for the IBM_CLOUD_REGION, REGISTRY_HOSTNAME, IMAGE_NAME, IKS_CLUSTER, DEPLOYMENT_NAME, and PORT
-
-name: busybox
+name: Build and Deploy to IKS
 
 on:
   push:
     branches: [ "master" ]
+  workflow_dispatch:  # Allows manual triggering of the workflow
 
 env:
   GITHUB_SHA: ${{ github.sha }}
@@ -23,7 +16,7 @@ env:
   DEPLOYMENT_NAME: busybox
   PORT: 5001
   SECRET_ID: ${{ secrets.SECRET_ID }}  # ID of the secret in IBM Cloud Secrets Manager
-  SECRETS_MANAGER_URL: ${{ secrets.SECRETS_MANAGER_URL }}  # 
+  SECRETS_MANAGER_URL: ${{ secrets.SECRETS_MANAGER_URL }}  # URL of the Secrets Manager instance
 
 jobs:
   setup-build-publish-deploy:
@@ -35,8 +28,8 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v4
 
-    # Download and Install IBM Cloud CLI
-    - name: Install IBM Cloud CLI
+    # Download and Install IBM Cloud CLI and Plugins
+    - name: Install IBM Cloud CLI and Plugins
       run: |
         curl -fsSL https://clis.cloud.ibm.com/install/linux | sh
         ibmcloud --version
@@ -76,10 +69,19 @@ jobs:
       run: |
         docker push ghcr.io/${{ github.repository_owner }}/$IMAGE_NAME:$GITHUB_SHA
 
+    # Configure `kubectl` to use the IKS cluster
+    - name: Configure kubectl
+      run: |
+        ibmcloud ks cluster config --cluster $IKS_CLUSTER
+        export KUBECONFIG=~/.bluemix/plugins/container-service/clusters/$IKS_CLUSTER/kube-config-$IKS_CLUSTER.yml
+        kubectl config current-context
+
     # Retrieve secrets from IBM Cloud Secrets Manager and create Kubernetes secret
     - name: Retrieve secrets and create Kubernetes secret
+      env:
+        SECRETS_MANAGER_URL: ${{ secrets.SECRETS_MANAGER_URL }}
       run: |
-        SECRET=$(ibmcloud secrets-manager secret --id $SECRET_ID --output json)
+        SECRET=$(ibmcloud secrets-manager secret --id $SECRET_ID --service-url $SECRETS_MANAGER_URL --output json)
         USERNAME=$(echo $SECRET | jq -r '.resources[0].username')
         PASSWORD=$(echo $SECRET | jq -r '.resources[0].password')
         kubectl create secret generic my-k8s-secret --from-literal=username=$USERNAME --from-literal=password=$PASSWORD --namespace=default --dry-run=client -o yaml | kubectl apply -f -
@@ -87,8 +89,6 @@ jobs:
     # Deploy the Docker image to the IKS cluster
     - name: Deploy to IKS
       run: |
-        ibmcloud ks cluster config --cluster $IKS_CLUSTER
-        kubectl config current-context
         kubectl create deployment $DEPLOYMENT_NAME --image=ghcr.io/${{ github.repository_owner }}/$IMAGE_NAME:$GITHUB_SHA --dry-run=client -o yaml > deployment.yaml
         kubectl apply -f deployment.yaml
         kubectl rollout status deployment/$DEPLOYMENT_NAME
