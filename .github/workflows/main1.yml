@@ -83,8 +83,8 @@ jobs:
     - name: Create Kubernetes secret
       run: | 
         ibmcloud ks cluster config --cluster $IKS_CLUSTER
-        kubectl create secret generic my-k8s-secret --from-literal=username=$username --from-literal=password=$password --namespace=default --dry-run=client -o yaml | kubectl apply -f -
-		kubectl get secret my-k8s-secret -o yaml  # Add this line to check the secret
+		kubectl create secret generic my-k8s-secret --from-literal=username=$username --from-literal=password=$password --namespace=default --dry-run=client -o yaml | kubectl apply -f -
+		kubectl get secret my-k8s-secret -o yaml
 
     # Configure kubectl to use the IKS cluster
     - name: Configure kubectl
