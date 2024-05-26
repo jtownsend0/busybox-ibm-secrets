@@ -90,6 +90,7 @@ jobs:
         if [[ -z "${{ env.USERNAME }}" || -z "${{ env.PASSWORD }}" ]]; then
           echo "Error: Username or password environment variable is empty."
           exit 1
+        fi
 
     - name: Create Kubernetes secret
       run: |
