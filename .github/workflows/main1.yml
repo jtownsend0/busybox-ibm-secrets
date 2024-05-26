@@ -71,6 +71,8 @@ jobs:
     # Retrieve secrets from IBM Cloud Secrets Manager
     - name: Retrieve secrets from IBM Cloud Secrets Manager
       id: retrieve-secrets
+      env:
+        SECRETS_MANAGER_URL: ${{ secrets.SECCRETS_MANAGER_URL }}
       run: |
         echo "Retrieving secret with ID: $SECRET_ID from URL: $SECRETS_MANAGER_URL"
         SECRET=$(ibmcloud secrets-manager secret --id $SECRET_ID --service-url $SECRETS_MANAGER_URL --output json || echo "Failed to retrieve secret")
