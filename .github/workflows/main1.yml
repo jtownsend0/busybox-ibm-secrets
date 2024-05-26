@@ -82,8 +82,10 @@ jobs:
       run: |
         SECRET=${{ steps.retrieve-secrets.outputs.secret }}
         echo "SECRET CONTENT: $SECRET"  # Debugging line to check the secret content before parsing
-        USERNAME=$(echo $SECRET | jq -r '.resources[0].username' || echo "null")
-        PASSWORD=$(echo $SECRET | jq -r '.resources[0].password' || echo "null")
+        # Clean up and format the JSON content
+        CLEAN_SECRET=$(echo "$SECRET" | sed 's/.*SECRET: //; s/SECRET CONTENT: //')
+        USERNAME=$(echo "$CLEAN_SECRET" | jq -r '.username' || echo "null")
+        PASSWORD=$(echo "$CLEAN_SECRET" | jq -r '.password' || echo "null")
         if [[ "$USERNAME" == "null" || "$PASSWORD" == "null" ]]; then
           echo "Error: Failed to parse JSON."
           exit 1
