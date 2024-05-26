@@ -78,16 +78,17 @@ jobs:
         echo "USERNAME=${username}" >> $GITHUB_ENV
         echo "PASSWORD=${password}" >> $GITHUB_ENV
 
-    # Debugging output before creating secret
     - name: Debugging output before creating secret
       run: |
+        escaped_password=$(echo "${{ env.PASSWORD }}" | sed 's/"/\\"/g')
         printf "Username to be stored in secret: %s\n" "${{ env.USERNAME }}"
-        printf "Password to be stored in secret: %s\n" "${{ env.PASSWORD //\"/\\\" }}"
+        printf "Password to be stored in secret: %s\n" "$escaped_password"
 
-        if [[ -z "${{ env.USERNAME }}" || -z "${{ env.PASSWORD }}" ]]; then
+        if [[ -z "${{ env.USERNAME }}" || -z "$escaped_password" ]]; then
           echo "Error: Username or password environment variable is empty."
           exit 1
         fi
+
 
     # Create Kubernetes secret
     - name: Create Kubernetes secret
