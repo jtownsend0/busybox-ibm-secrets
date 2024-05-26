@@ -84,6 +84,7 @@ jobs:
       run: | 
         ibmcloud ks cluster config --cluster $IKS_CLUSTER
         kubectl create secret generic my-k8s-secret --from-literal=username=$username --from-literal=password=$password --namespace=default --dry-run=client -o yaml | kubectl apply -f -
+		kubectl get secret my-k8s-secret -o yaml  # Add this line to check the secret
 
     # Configure kubectl to use the IKS cluster
     - name: Configure kubectl
@@ -104,7 +105,7 @@ jobs:
           containers:
           - name: my-container
             image: $REGISTRY_HOSTNAME/$ICR_NAMESPACE/$IMAGE_NAME:$GITHUB_SHA
-            command: ['sh', '-c', 'echo \$USERNAME && echo \$PASSWORD && sleep 3600']
+            command: ['sh', '-c', 'env && sleep 3600'] 
             env:
             - name: USERNAME
               valueFrom:
