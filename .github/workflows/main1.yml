@@ -16,7 +16,7 @@ env:
   DEPLOYMENT_NAME: my-deployment
   POD_NAME: my-pod
   SECRET_ID: ${{ secrets.SECRET_ID }}
-  SECRETS_MANAGER_URL: ${{ secrets.SESECRETS_MANAGER_URL }}
+  SECRETS_MANAGER_URL: ${{ secrets.SECRETS_MANAGER_URL }}
 
 jobs:
   setup-build-publish-deploy:
@@ -76,8 +76,8 @@ jobs:
         echo "Retrieved secret JSON: $secret"
         username=$(echo $secret | jq -r '.username')
         password=$(echo $secret | jq -r '.password')
-        escaped_username=$(printf '%s\n' "$username" | sed 's/[\/&]/\\&/g; s/$/\\$/g')
-        escaped_password=$(printf '%s\n' "$password" | sed 's/[\/&]/\\&/g; s/$/\\$/g')
+        escaped_username=$(printf '%s\n' "$username" | sed 's/[\"]/\\&/g')
+        escaped_password=$(printf '%s\n' "$password" | sed 's/[\"]/\\&/g')
         echo "USERNAME=${escaped_username}" >> $GITHUB_ENV
         echo "PASSWORD=${escaped_password}" >> $GITHUB_ENV
         echo "Username: $escaped_username"
@@ -90,7 +90,6 @@ jobs:
         if [[ -z "${{ env.USERNAME }}" || -z "${{ env.PASSWORD }}" ]]; then
           echo "Error: Username or password environment variable is empty."
           exit 1
-        fi
 
     - name: Create Kubernetes secret
       run: |
