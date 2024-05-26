@@ -23,6 +23,7 @@ env:
   DEPLOYMENT_NAME: busybox
   PORT: 5001
   SECRET_ID: ${{ secrets.SECRET_ID }}  # ID of the secret in IBM Cloud Secrets Manager
+  SECRETS_MANAGER_URL: ${{ secrets.SECRETS_MANAGER_URL }}  # 
 
 jobs:
   setup-build-publish-deploy:
