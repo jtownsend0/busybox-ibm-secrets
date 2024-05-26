@@ -69,15 +69,21 @@ jobs:
       run: |
         docker push $REGISTRY_HOSTNAME/$ICR_NAMESPACE/$IMAGE_NAME:$GITHUB_SHA
 
-         - name: Retrieve secret and extract fields
-        run: |
-          ibmcloud login --apikey ${{ secrets.IBM_CLOUD_API_KEY }} --no-region
-          secret=$(ibmcloud secrets-manager secret --id "645f2484-dc8f-a736-123b-27963d1b3bfa" --service-url https://caa65fc7-ea5b-4f4b-be25-af98144cc5e5.us-south.secrets-manager.appdomain.cloud --output json)
-          username=$(echo $secret | jq -r '.username')
-          password=$(echo $secret | jq -r '.password')
-          echo "Username: $username"
-          echo "Password: $password"
-        kubectl create secret generic my-k8s-secret --from-literal=username=$USERNAME --from-literal=password=$PASSWORD --namespace=default --dry-run=client -o yaml | kubectl apply -f -
+    # Retrieve secret and extract fields
+    - name: Retrieve secret and extract fields
+      run: |
+        ibmcloud login --apikey ${{ secrets.IBM_CLOUD_API_KEY }} --no-region
+        secret=$(ibmcloud secrets-manager secret --id ${{ secrets.SECRET_ID }} --service-url ${{ secrets.SECRETS_MANAGER_URL }} --output json)
+        username=$(echo $secret | jq -r '.username')
+        password=$(echo $secret | jq -r '.password')
+        echo "Username: $username"
+        echo "Password: $password"
+
+    # Create Kubernetes secret
+    - name: Create Kubernetes secret
+      run: |
+        ibmcloud ks cluster config --cluster $IKS_CLUSTER
+        kubectl create secret generic my-k8s-secret --from-literal=username=$username --from-literal=password=$password --namespace=default --dry-run=client -o yaml | kubectl apply -f -
 
     # Configure kubectl to use the IKS cluster
     - name: Configure kubectl
