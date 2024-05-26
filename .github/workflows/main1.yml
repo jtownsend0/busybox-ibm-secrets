@@ -91,7 +91,7 @@ jobs:
         ibmcloud ks cluster config --cluster $IKS_CLUSTER
         kubectl config current-context
 
-    # Deploy the Pod
+	# Deploy the Pod
 	- name: Deploy the Pod
 	  run: |
 		cat <<EOF | kubectl apply -f -
@@ -104,7 +104,7 @@ jobs:
 		  containers:
 		  - name: my-container
 			image: $REGISTRY_HOSTNAME/$ICR_NAMESPACE/$IMAGE_NAME:$GITHUB_SHA
-			command: ['sh', '-c', 'echo $USERNAME && echo $PASSWORD && sleep 3600']
+			command: ['sh', '-c', 'sleep 3600']
 			env:
 			- name: USERNAME
 			  valueFrom:
@@ -118,3 +118,5 @@ jobs:
 				  key: password
 		EOF
 
+		echo "Username: $USERNAME"
+		echo "Password: $PASSWORD"
