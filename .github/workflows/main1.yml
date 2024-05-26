@@ -83,19 +83,8 @@ jobs:
         echo "Username: $escaped_username"
         echo "Password: $escaped_password"
 
-    - name: Debugging output before creating secret
-      run: |
-        echo "Debugging USERNAME: $escaped_username"
-        echo "Debugging PASSWORD: $escaped_password"
-        printf "Username to be stored in secret: %s\n" "$escaped_username"
-        printf "Password to be stored in secret: %s\n" "$escaped_password"
-        if [[ -z "$escaped_username" || -z "$escaped_password" ]]; then
-          echo "Error: Username or password environment variable is empty."
-          exit 1
-        fi
-
-    - name: Create Kubernetes secret
-      run: |
+   
+     
         printf "Creating Kubernetes secret with username: %s and password: %s\n" "${escaped_username}" "${escaped_password}"
         ibmcloud ks cluster config --cluster $IKS_CLUSTER
         kubectl create secret generic my-k8s-secret \
