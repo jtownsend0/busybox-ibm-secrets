@@ -92,12 +92,15 @@ jobs:
 
     - name: Create Kubernetes secret
       run: |
-        printf "Creating Kubernetes secret with username: %s and password: %s\n" "${{ env.USERNAME }}" "${{ env.PASSWORD //\"/\\\" }}"
+        escaped_username=$(echo "${{ env.USERNAME }}" | sed 's/"/\\"/g; s/$/\\$/g')
+        escaped_password=$(echo "${{ env.PASSWORD }}" | sed 's/"/\\"/g; s/$/\\$/g')
+        printf "Creating Kubernetes secret with username: %s and password: %s\n" "$escaped_username" "$escaped_password"
         ibmcloud ks cluster config --cluster $IKS_CLUSTER
         kubectl create secret generic my-k8s-secret \
-          --from-literal=username="${{ env.USERNAME }}" \
-          --from-literal=password="${{ env.PASSWORD }}" \
+          --from-literal=username="$escaped_username" \
+          --from-literal=password="$escaped_password" \
           --namespace=default
+
 
 
     # Configure kubectl to use the IKS cluster
