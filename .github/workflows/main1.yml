@@ -104,31 +104,4 @@ jobs:
     - name: Configure kubectl
       run: |
         ibmcloud ks cluster config --cluster $IKS_CLUSTER
-        kubectl config current-context
-
-    # Deploy the Pod
-    - name: Deploy the Pod
-      run: |
-        cat <<EOF | kubectl apply -f -
-        apiVersion: v1
-        kind: Pod
-        metadata:
-          name: $POD_NAME
-          namespace: default
-        spec:
-          containers:
-          - name: my-container
-            image: $REGISTRY_HOSTNAME/$ICR_NAMESPACE/$IMAGE_NAME:$GITHUB_SHA
-            command: ['sh', '-c', 'echo \$USERNAME && echo \$PASSWORD && sleep 3600']
-            env:
-            - name: USERNAME
-              valueFrom:
-                secretKeyRef:
-                  name: my-k8s-secret
-                  key: username
-            - name: PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: my-k8s-secret
-                  key: password
-        EOF
+       
