@@ -2,7 +2,7 @@ name: Build and Deploy to IKS
 
 on:
   push:
-    branches: [ "master" ]
+    branches: [ "main" ]
   workflow_dispatch:  # Allows manual triggering of the workflow
 
 env:
@@ -72,9 +72,10 @@ jobs:
     # Configure `kubectl` to use the IKS cluster
     - name: Configure kubectl
       run: |
-        ibmcloud ks cluster config --cluster $IKS_CLUSTER
-        export KUBECONFIG=~/.bluemix/plugins/container-service/clusters/$IKS_CLUSTER/kube-config-$IKS_CLUSTER.yml
+        ibmcloud ks cluster config --cluster $IKS_CLUSTER --admin
+        export KUBECONFIG=$(ibmcloud ks cluster config --cluster $IKS_CLUSTER --admin | grep export | cut -d ' ' -f3)
         kubectl config current-context
+        kubectl cluster-info
 
     # Retrieve secrets from IBM Cloud Secrets Manager and create Kubernetes secret
     - name: Retrieve secrets and create Kubernetes secret
