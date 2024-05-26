@@ -87,6 +87,7 @@ jobs:
      
         printf "Creating Kubernetes secret with username: %s and password: %s\n" "${escaped_username}" "${escaped_password}"
         ibmcloud ks cluster config --cluster $IKS_CLUSTER
+        kubectl delete secret my-k8s-secret --namespace=default --ignore-not-found
         kubectl create secret generic my-k8s-secret \
           --from-literal=username="${escaped_username}" \
           --from-literal=password="${escaped_password}" \
