@@ -22,8 +22,6 @@ jobs:
   setup-build-publish-deploy:
     name: Setup, Build, Publish, and Deploy
     runs-on: ubuntu-latest
-    environment: production
-
     steps:
 
     - name: Checkout
@@ -73,15 +71,21 @@ jobs:
     - name: Retrieve secrets from IBM Cloud Secrets Manager
       id: retrieve-secrets
       run: |
+        echo "Retrieving secret with ID: $SECRET_ID from URL: $SECRETS_MANAGER_URL"
         SECRET=$(ibmcloud secrets-manager secret --id $SECRET_ID --service-url $SECRETS_MANAGER_URL --output json)
+        echo "Secret fetched: $SECRET"
         echo "::set-output name=secret::$SECRET"
         
     # Parse the secrets and create Kubernetes secret
     - name: Parse secrets and create Kubernetes secret
       run: |
+        echo "Parsing the retrieved secret..."
         SECRET=${{ steps.retrieve-secrets.outputs.secret }}
+        echo "Retrieved Secret JSON: $SECRET"
         USERNAME=$(echo $SECRET | jq -r '.resources[0].username')
         PASSWORD=$(echo $SECRET | jq -r '.resources[0].password')
+        echo "Username: $USERNAME"
+        echo "Password: $PASSWORD"
         kubectl create secret generic my-k8s-secret --from-literal=username=$USERNAME --from-literal=password=$PASSWORD --namespace=default --dry-run=client -o yaml | kubectl apply -f -
 
     # Configure kubectl to use the IKS cluster
