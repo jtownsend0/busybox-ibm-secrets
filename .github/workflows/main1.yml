@@ -42,6 +42,7 @@ jobs:
         ibmcloud config --check-version=false
         ibmcloud plugin install -f kubernetes-service
         ibmcloud plugin install -f container-registry
+        ibmcloud plugin install -f secrets-manager  # Install the Secrets Manager plugin
 
     # Authenticate with IBM Cloud CLI
     - name: Authenticate with IBM Cloud CLI
